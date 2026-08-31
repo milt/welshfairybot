@@ -17,7 +17,7 @@ an equivalent convention:
 - `src/index.ts` - application entry point
 - `src/lib/bot.ts` - bot implementation
 - `src/lib/config.ts` - bluesky auth/config
-- `src/lib/getPostText` - defines the function we will build to get random sentences from welshFairyBook.json
+- `src/lib/getPostText.ts` - defines the function we will build to get random sentences from welshFairyBook.json
 - `src/test/` - add focused automated tests for sentence extraction, no need to test bluesky itself
 - `.github/workflows/post.yml` - Github Actions workflow to periodically post
 
