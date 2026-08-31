@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run src/test",
     "lint": "eslint src/",
     "build": "tsc",
     "watch": "tsc --watch",

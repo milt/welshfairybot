@@ -5,6 +5,7 @@ import type {
   AtpAgentOptions,
 } from "@atproto/api";
 import { AtpAgent, RichText } from "@atproto/api";
+import splitPostText from "./splitPostText.js";
 
 interface BotOptions {
   service: string | URL;
@@ -34,6 +35,7 @@ export default class Bot {
         & Partial<AppBskyFeedPost.Record>
         & Omit<AppBskyFeedPost.Record, "createdAt">
       ),
+    reply?: AppBskyFeedPost.ReplyRef,
   ) {
     if (typeof text === "string") {
       const richText = new RichText({ text });
@@ -41,6 +43,7 @@ export default class Bot {
       const record = {
         text: richText.text,
         facets: richText.facets,
+        reply,
       };
       return this.#agent.post(record);
     } else {
@@ -58,10 +61,23 @@ export default class Bot {
     const bot = new Bot(service);
     await bot.login(bskyAccount);
     const text = (await getPostText()).trim();
+    const parts = splitPostText(text);
     if (!dryRun) {
-      await bot.post(text);
+      let root: AppBskyFeedPost.ReplyRef["root"] | undefined;
+      let parent: AppBskyFeedPost.ReplyRef["parent"] | undefined;
+
+      for (const part of parts) {
+        const result = await bot.post(
+          part,
+          root && parent ? { root, parent } : undefined,
+        );
+        root ??= result;
+        parent = result;
+      }
     } else {
-      console.log(text);
+      for (const part of parts) {
+        console.log(part);
+      }
     }
     return text;
   }
