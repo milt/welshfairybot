@@ -1,4 +1,4 @@
-import { bskyAccount, bskyService } from "./config.js";
+import { bskyAccount, bskyHistoryLimit, bskyService } from "./config.js";
 import type {
   AppBskyFeedPost,
   AtpAgentLoginOpts,
@@ -6,10 +6,12 @@ import type {
 } from "@atproto/api";
 import { AtpAgent, RichText } from "@atproto/api";
 import splitPostText from "./splitPostText.js";
+import hasRecentDuplicate from "./hasRecentDuplicate.js";
 
 interface BotOptions {
   service: string | URL;
   dryRun: boolean;
+  historyLimit: number;
 }
 
 export default class Bot {
@@ -18,6 +20,7 @@ export default class Bot {
   static defaultOptions: BotOptions = {
     service: bskyService,
     dryRun: false,
+    historyLimit: bskyHistoryLimit,
   } as const;
 
   constructor(service: AtpAgentOptions["service"]) {
@@ -26,6 +29,29 @@ export default class Bot {
 
   login(loginOpts: AtpAgentLoginOpts) {
     return this.#agent.login(loginOpts);
+  }
+
+  async recentPostTexts(limit: number): Promise<string[]> {
+    const actor = this.#agent.did;
+    if (!actor) {
+      throw new Error("Bot must be logged in before fetching recent posts.");
+    }
+    const response = await this.#agent.getAuthorFeed({
+      actor,
+      limit,
+    });
+    return response.data.feed.flatMap(({ post }) => {
+      const record = post.record;
+      if (
+        typeof record === "object" &&
+        record !== null &&
+        "text" in record &&
+        typeof record.text === "string"
+      ) {
+        return [record.text];
+      }
+      return [];
+    });
   }
 
   async post(
@@ -55,13 +81,27 @@ export default class Bot {
     getPostText: () => Promise<string>,
     botOptions?: Partial<BotOptions>,
   ) {
-    const { service, dryRun } = botOptions
+    const { service, dryRun, historyLimit } = botOptions
       ? Object.assign({}, this.defaultOptions, botOptions)
       : this.defaultOptions;
     const bot = new Bot(service);
     await bot.login(bskyAccount);
-    const text = (await getPostText()).trim();
-    const parts = splitPostText(text);
+    let text = "";
+    let parts: string[] = [];
+    const recentPostTexts = dryRun
+      ? []
+      : await bot.recentPostTexts(historyLimit);
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      text = (await getPostText()).trim();
+      parts = splitPostText(text);
+      if (!hasRecentDuplicate(parts, recentPostTexts)) {
+        break;
+      }
+      if (attempt === 9) {
+        throw new Error("Could not select a sentence not recently posted.");
+      }
+    }
     if (!dryRun) {
       let root: AppBskyFeedPost.ReplyRef["root"] | undefined;
       let parent: AppBskyFeedPost.ReplyRef["parent"] | undefined;

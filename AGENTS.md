@@ -41,7 +41,6 @@ by the task.
 
 ## Implementation Rules
 
-- The bot operates statelessly, it is OK if it posts the same thing twice.
 - Do not use `any` or disable TypeScript/compiler/linter checks to make a build
   pass.
 - Do not leave dead code, debug logging, commented-out implementations, or
