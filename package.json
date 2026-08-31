@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "lint": "eslint src/",
     "build": "tsc",
     "watch": "tsc --watch",
@@ -30,7 +30,8 @@
     "eslint": "^9.15.0",
     "node-env-run": "^4.0.2",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.15.0"
+    "typescript-eslint": "^8.15.0",
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@atproto/api": "^0.13.18",
