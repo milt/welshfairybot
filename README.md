@@ -121,3 +121,7 @@ In your repo's settings, under *Secrets and variables* > *Actions* you need to e
 Once the schedule is set up and your Environment variables configured, push your changes to your repo and wait for the schedule to trigger the workflow. Your bot will start publishing posts based on your code.
 
 If you have any issues with that, please [raise an issue in this repo](https://github.com/philnash/bsky-bot/issues) or send me a message on Bluesky [@philna.sh](https://staging.bsky.app/profile/philna.sh).
+
+Copyright © 2026 Milt Reder
+
+Distributed under the Apache License version 2.0.
