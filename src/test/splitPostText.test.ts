@@ -11,6 +11,10 @@ function graphemeLength(text: string): number {
   return Array.from(graphemeSegmenter.segment(text)).length;
 }
 
+function removeContinuationMarkers(text: string): string {
+  return text.replaceAll("…", "");
+}
+
 describe("splitPostText", () => {
   it("leaves short text unchanged", () => {
     const text = "A short sentence from the book.";
@@ -25,7 +29,11 @@ describe("splitPostText", () => {
     const parts = splitPostText(text);
 
     expect(parts.length).toBeGreaterThan(1);
-    expect(parts.join(" ")).toBe(text);
+    expect(parts[0].startsWith("…")).toBe(false);
+    expect(parts[0].endsWith("…")).toBe(true);
+    expect(parts.at(-1)?.startsWith("…")).toBe(true);
+    expect(parts.at(-1)?.endsWith("…")).toBe(false);
+    expect(parts.map(removeContinuationMarkers).join(" ")).toBe(text);
     expect(parts.every((part) => graphemeLength(part) <= MAX_POST_GRAPHEMES))
       .toBe(true);
   });
@@ -44,7 +52,7 @@ describe("splitPostText", () => {
     const parts = splitPostText(text);
 
     expect(parts).toHaveLength(2);
-    expect(parts.join("")).toBe(text);
+    expect(parts.map(removeContinuationMarkers).join("")).toBe(text);
     expect(parts.every((part) => graphemeLength(part) <= MAX_POST_GRAPHEMES))
       .toBe(true);
   });
