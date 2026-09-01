@@ -57,21 +57,25 @@ function removeBotMention(
   facets: unknown[],
   botDid: string,
 ): string | undefined {
-  const ranges = facets.flatMap((facet) => {
+  const ranges: { start: number; end: number }[] = [];
+  for (const facet of facets) {
     if (!isObject(facet) || !isObject(facet.index)) {
-      return [];
+      continue;
     }
     const features = Array.isArray(facet.features) ? facet.features : [];
     if (!features.some((feature) => mentionTargetsBot(feature, botDid))) {
-      return [];
+      continue;
     }
     const start = facet.index.byteStart;
     const end = facet.index.byteEnd;
-    return typeof start === "number" && typeof end === "number" &&
-        Number.isInteger(start) && Number.isInteger(end) && start >= 0 && end > start
-      ? [{ start, end }]
-      : [];
-  });
+    if (
+      typeof start !== "number" || typeof end !== "number" ||
+      !Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start
+    ) {
+      return undefined;
+    }
+    ranges.push({ start, end });
+  }
 
   const bytes = new TextEncoder().encode(text);
   const ascendingRanges = [...ranges].sort((a, b) => a.start - b.start);
@@ -84,16 +88,24 @@ function removeBotMention(
     return undefined;
   }
 
-  const decoder = new TextDecoder("utf-8", { fatal: true });
-  for (const { start, end } of ascendingRanges.reverse()) {
-    const withoutMention = new Uint8Array(bytes.length - (end - start));
-    withoutMention.set(bytes.slice(0, start));
-    withoutMention.set(bytes.slice(end), start);
-    try {
-      text = decoder.decode(withoutMention);
-    } catch {
-      return undefined;
-    }
+  const removedByteLength = ascendingRanges.reduce(
+    (length, { start, end }) => length + end - start,
+    0,
+  );
+  const withoutMentions = new Uint8Array(bytes.length - removedByteLength);
+  let sourceOffset = 0;
+  let outputOffset = 0;
+  for (const { start, end } of ascendingRanges) {
+    const chunk = bytes.slice(sourceOffset, start);
+    withoutMentions.set(chunk, outputOffset);
+    outputOffset += chunk.length;
+    sourceOffset = end;
+  }
+  withoutMentions.set(bytes.slice(sourceOffset), outputOffset);
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(withoutMentions);
+  } catch {
+    return undefined;
   }
   return text.replace(/\s+/gu, " ").trim();
 }
