@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import sentences from "../data/welshFairyBook.json" with { type: "json" };
 import getPostText, { getPostTextContaining } from "../lib/getPostText.js";
+import {
+  createMentionResponsePlan,
+  DEFAULT_NO_MATCH_MESSAGE,
+} from "../lib/mentions.js";
 
 describe("getPostText", () => {
   it("returns a non-empty sentence from the Welsh Fairy Book", async () => {
@@ -41,5 +45,29 @@ describe("getPostText", () => {
     expect(getPostTextContaining(phrase, () => 1 - Number.EPSILON)).toBe(
       matches.at(-1),
     );
+  });
+
+  it("creates a matching response plan", () => {
+    const source = sentences.find((sentence) => sentence.trim().length > 20);
+    if (!source) {
+      throw new Error("Test fixture contains no sufficiently long sentence.");
+    }
+    const query = source.trim().split(/\s+/u).slice(0, 2).join(" ");
+    const plan = createMentionResponsePlan(query, DEFAULT_NO_MATCH_MESSAGE, () => 0);
+
+    expect(plan.matchedText).toBe(source);
+    expect(plan.usedFallback).toBe(false);
+    expect(plan.parts.join("")).toContain(source.slice(0, 20));
+  });
+
+  it("uses a configurable fallback response when there is no match", () => {
+    const plan = createMentionResponsePlan(
+      "__not-a-book-phrase__",
+      "No fairy found 🧚",
+    );
+
+    expect(plan.matchedText).toBeUndefined();
+    expect(plan.usedFallback).toBe(true);
+    expect(plan.parts).toEqual(["No fairy found 🧚"]);
   });
 });
