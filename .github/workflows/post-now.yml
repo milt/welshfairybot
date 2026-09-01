@@ -1,0 +1,30 @@
+name: "Post to Bluesky now"
+
+on: workflow_dispatch
+
+concurrency:
+  group: welsh-fairy-bot-scheduler
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  post-now:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+      - run: npm ci
+      - run: npm run build
+      - name: Reset schedule and post now
+        run: npm run post-now
+        env:
+          BSKY_HANDLE: ${{ secrets.BSKY_HANDLE }}
+          BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+          SCHEDULER_GITHUB_TOKEN: ${{ secrets.SCHEDULER_GITHUB_TOKEN }}
+          MIN_POST_INTERVAL_MINUTES: ${{ vars.MIN_POST_INTERVAL_MINUTES }}
+          MAX_POST_INTERVAL_MINUTES: ${{ vars.MAX_POST_INTERVAL_MINUTES }}

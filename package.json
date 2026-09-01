@@ -9,6 +9,7 @@
     "lint": "eslint src/",
     "build": "tsc",
     "schedule": "node dist/scheduler.js",
+    "post-now": "node dist/postNow.js",
     "watch": "tsc --watch",
     "start": "node .",
     "dev": "nodenv ."
