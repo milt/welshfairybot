@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_NO_MATCH_MESSAGE } from "./mentionDefaults.js";
 
 const optionalInteger = (defaultValue: number) =>
   z.preprocess(
@@ -12,6 +13,10 @@ const schedulerConfigSchema = z.object({
   SCHEDULER_GITHUB_TOKEN: z.string().min(1),
   GITHUB_REPOSITORY: z.string().regex(/^[^/]+\/[^/]+$/u),
   GITHUB_API_URL: z.string().url().default("https://api.github.com"),
+  BSKY_NO_MATCH_MESSAGE: z.preprocess(
+    (value) => value === "" || value === undefined ? undefined : value,
+    z.string().min(1).default(DEFAULT_NO_MATCH_MESSAGE),
+  ),
 }).refine(
   (config) =>
     config.MIN_POST_INTERVAL_MINUTES <= config.MAX_POST_INTERVAL_MINUTES,

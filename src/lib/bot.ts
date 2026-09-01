@@ -31,6 +31,19 @@ export default class Bot {
     return this.#agent.login(loginOpts);
   }
 
+  get did(): string {
+    if (!this.#agent.did) throw new Error("Bot must be logged in before this operation.");
+    return this.#agent.did;
+  }
+
+  async listNotifications(limit: number): Promise<readonly unknown[]> {
+    return (await this.#agent.listNotifications({ limit })).data.notifications;
+  }
+
+  async getPostThread(uri: string, depth: number): Promise<unknown> {
+    return (await this.#agent.getPostThread({ uri, depth, parentHeight: 0 })).data.thread;
+  }
+
   async recentPostTexts(limit: number): Promise<string[]> {
     const actor = this.#agent.did;
     if (!actor) {
