@@ -1,8 +1,8 @@
 import { getPostTextContaining } from "./getPostText.js";
+import { DEFAULT_NO_MATCH_MESSAGE } from "./mentionDefaults.js";
 import splitPostText from "./splitPostText.js";
 
-export const DEFAULT_NO_MATCH_MESSAGE =
-  "The fair family could not find a matching sentence. 🧚";
+export { DEFAULT_NO_MATCH_MESSAGE } from "./mentionDefaults.js";
 
 interface StrongReference {
   uri: string;

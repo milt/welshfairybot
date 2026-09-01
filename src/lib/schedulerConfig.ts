@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_NO_MATCH_MESSAGE } from "./mentionDefaults.js";
 
 const optionalInteger = (defaultValue: number) =>
   z.preprocess(
@@ -14,7 +15,7 @@ const schedulerConfigSchema = z.object({
   GITHUB_API_URL: z.string().url().default("https://api.github.com"),
   BSKY_NO_MATCH_MESSAGE: z.preprocess(
     (value) => value === "" || value === undefined ? undefined : value,
-    z.string().min(1).default("The Fair Family could not find a matching sentence. 🧚"),
+    z.string().min(1).default(DEFAULT_NO_MATCH_MESSAGE),
   ),
 }).refine(
   (config) =>
