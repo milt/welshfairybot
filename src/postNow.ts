@@ -5,6 +5,7 @@ import { parseSchedulerConfig } from "./lib/schedulerConfig.js";
 
 const config = parseSchedulerConfig(env);
 const state = new GitHubActionsVariableState({
+  variableName: "NEXT_POST_AT",
   token: config.SCHEDULER_GITHUB_TOKEN,
   repository: config.GITHUB_REPOSITORY,
   apiUrl: config.GITHUB_API_URL,

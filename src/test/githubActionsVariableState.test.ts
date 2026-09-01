@@ -5,6 +5,7 @@ const nextPostAt = "2026-09-01T15:00:00.000Z";
 
 function stateWith(fetchImplementation: typeof fetch) {
   return new GitHubActionsVariableState({
+    variableName: "NEXT_POST_AT",
     token: "test-token",
     repository: "owner/repository",
     apiUrl: "https://api.github.test",
