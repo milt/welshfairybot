@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   calculateNextPostAt,
+  formatInterval,
   isPostDue,
   randomInterval,
   runScheduler,
@@ -27,6 +28,15 @@ describe("scheduler", () => {
     await expect(runScheduler(options)).resolves.toBe("not-due");
     expect(options.persistNextPostAt).not.toHaveBeenCalled();
     expect(options.post).not.toHaveBeenCalled();
+    expect(options.log).toHaveBeenCalledWith(
+      expect.stringContaining("in 1 minute"),
+    );
+  });
+
+  it("formats intervals for readable logs", () => {
+    expect(formatInterval(1)).toBe("1 minute");
+    expect(formatInterval(60)).toBe("1 hour");
+    expect(formatInterval(195)).toBe("3 hours 15 minutes");
   });
 
   it("treats an equal timestamp as due", () => {
@@ -44,6 +54,9 @@ describe("scheduler", () => {
       await expect(runScheduler(options)).resolves.toBe("initialized");
       expect(options.persistNextPostAt).toHaveBeenCalledOnce();
       expect(options.post).not.toHaveBeenCalled();
+      expect(options.log).toHaveBeenCalledWith(
+        expect.stringContaining("in 3 hours"),
+      );
     },
   );
 

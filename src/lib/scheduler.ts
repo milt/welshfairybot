@@ -33,6 +33,22 @@ function parseTimestamp(timestamp: string | undefined): Date | undefined {
   return Number.isNaN(milliseconds) ? undefined : new Date(milliseconds);
 }
 
+export function formatInterval(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  const parts: string[] = [];
+
+  if (hours > 0) {
+    parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  }
+  if (remainingMinutes > 0 || hours === 0) {
+    parts.push(
+      `${remainingMinutes} ${remainingMinutes === 1 ? "minute" : "minutes"}`,
+    );
+  }
+  return parts.join(" ");
+}
+
 export function isPostDue(now: Date, nextPostAt: string): boolean {
   const nextPostDate = parseTimestamp(nextPostAt);
   return nextPostDate !== undefined && now.getTime() >= nextPostDate.getTime();
@@ -88,13 +104,18 @@ export async function runScheduler({
     );
     await persistNextPostAt(next.nextPostAt);
     log(
-      `Scheduler state missing or invalid; initialized next post for ${next.nextPostAt}.`,
+      `Scheduler state missing or invalid; initialized next post for ${next.nextPostAt} (in ${formatInterval(next.intervalMinutes)}).`,
     );
     return "initialized";
   }
 
   if (!isPostDue(now, nextPostAt as string)) {
-    log(`Next post scheduled for ${parsedNextPostAt.toISOString()}; nothing to do.`);
+    const minutesUntilPost = Math.ceil(
+      (parsedNextPostAt.getTime() - now.getTime()) / 60_000,
+    );
+    log(
+      `Next post scheduled for ${parsedNextPostAt.toISOString()} (in ${formatInterval(minutesUntilPost)}); nothing to do.`,
+    );
     return "not-due";
   }
 
@@ -107,7 +128,7 @@ export async function runScheduler({
   );
   await persistNextPostAt(next.nextPostAt);
   log(
-    `Selected ${next.intervalMinutes} minute interval; persisted next post for ${next.nextPostAt}.`,
+    `Selected ${formatInterval(next.intervalMinutes)} interval; persisted next post for ${next.nextPostAt}.`,
   );
   await post();
   log("Bluesky posting operation succeeded.");
