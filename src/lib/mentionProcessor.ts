@@ -59,12 +59,15 @@ export async function processMentions(
     return request ? [request] : [];
   });
   const rawState = await store.read();
-  let state = parseMentionState(rawState);
-  if (!state) {
-    state = createMentionState(requests.map((request) => request.uri));
-    await persist(store, state);
+  if (rawState === undefined) {
+    const initialState = createMentionState(requests.map((request) => request.uri));
+    await persist(store, initialState);
     log("Initialized mention state; no historical mentions were replied to.");
     return;
+  }
+  let state = parseMentionState(rawState);
+  if (!state) {
+    throw new Error("MENTION_BOT_STATE is invalid; delete it to reinitialize mention history.");
   }
 
   const processRequest = async (request: MentionRequest, currentState: MentionBotState): Promise<MentionBotState> => {
@@ -113,6 +116,6 @@ export async function processMentions(
   const candidates = requests
     .filter((request) => !latestState.processedMentionUris.includes(request.uri))
     .sort((a, b) => Date.parse(a.indexedAt) - Date.parse(b.indexedAt))
-    .slice(0, 5);
+    .slice(0, activeState.pending ? 4 : 5);
   for (const request of candidates) state = await processRequest(request, state);
 }
