@@ -68,9 +68,11 @@ export async function processMentions(
   }
 
   const processRequest = async (request: MentionRequest, currentState: MentionBotState): Promise<MentionBotState> => {
+    const plan = createMentionResponsePlan(request.query, noMatchMessage);
+    if (plan.usedFallback) log(`No sentence match for mention ${request.uri}; using fallback.`);
     const pending = currentState.pending?.uri === request.uri
       ? currentState.pending
-      : { uri: request.uri, cid: request.cid, ...(request.root ? { root: request.root } : {}), parts: createMentionResponsePlan(request.query, noMatchMessage).parts };
+      : { uri: request.uri, cid: request.cid, ...(request.root ? { root: request.root } : {}), parts: plan.parts };
     let next = currentState.pending?.uri === request.uri ? currentState : await persist(store, { ...currentState, pending });
     const thread = await bot.getPostThread(request.uri, pending.parts.length + 2);
     const source = findThreadPost(thread, request.uri);
@@ -95,7 +97,8 @@ export async function processMentions(
   };
 
   const activeState = state;
-  if (activeState.pending && !requests.some((request) => request.uri === activeState.pending?.uri)) {
+  if (activeState.pending) {
+    const pendingSource = requests.find((request) => request.uri === activeState.pending?.uri);
     const pendingRequest: MentionRequest = {
       uri: activeState.pending.uri,
       cid: activeState.pending.cid,
@@ -104,7 +107,7 @@ export async function processMentions(
       query: "",
       ...(activeState.pending.root ? { root: activeState.pending.root } : {}),
     };
-    state = await processRequest(pendingRequest, activeState);
+    state = await processRequest(pendingSource ?? pendingRequest, activeState);
   }
   const latestState = state ?? activeState;
   const candidates = requests
