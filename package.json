@@ -8,6 +8,7 @@
     "test": "vitest run src/test",
     "lint": "eslint src/",
     "build": "tsc",
+    "schedule": "node dist/scheduler.js",
     "watch": "tsc --watch",
     "start": "node .",
     "dev": "nodenv ."

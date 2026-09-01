@@ -3,7 +3,14 @@ name: "Post to Bluesky"
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 */3 * * *"
+    - cron: "7,22,37,52 * * * *"
+
+concurrency:
+  group: welsh-fairy-bot-scheduler
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -16,8 +23,11 @@ jobs:
           node-version-file: ".nvmrc"
       - run: npm ci
       - run: npm run build
-      - name: Send post
-        run: npm start
+      - name: Check schedule and possibly post
+        run: npm run schedule
         env:
           BSKY_HANDLE: ${{ secrets.BSKY_HANDLE }}
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+          SCHEDULER_GITHUB_TOKEN: ${{ secrets.SCHEDULER_GITHUB_TOKEN }}
+          MIN_POST_INTERVAL_MINUTES: ${{ vars.MIN_POST_INTERVAL_MINUTES }}
+          MAX_POST_INTERVAL_MINUTES: ${{ vars.MAX_POST_INTERVAL_MINUTES }}
